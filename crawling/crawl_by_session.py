@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import time
 import os
 import shutil
+import sqlite3
+import numpy as np
 
 from lxml import etree
 
@@ -26,8 +28,27 @@ def pageOption(pageNum):
     page = driver.find_element_by_xpath(f"//option[@value='{str(pageNum)}']")
     page.click()
 
+def updateOneRow(db, vals_list):
+    db_conn = sqlite3.connect(db, isolation_level=None)
+    c = db_conn.cursor()
+
+    c.execute("""
+                INSERT INTO 
+                assembly(
+                billNum, 
+                billName,
+                billId,
+                proposerCategory,
+                proposerData,
+                decisionDate,
+                decisionResult,
+                mainProposer,
+                subProposer) 
+                VALUES(?,?,?,?,?,?,?,?,?)
+                """, vals_list)
+
 # 다운로드 경로 지정
-download_dir = '/Users/shinbo/Desktop/contest/assembly/data/'
+download_dir = '/Users/shinbo/contest_repository/assembly/data/'
 options = webdriver.ChromeOptions()
 options.add_experimental_option("prefs", {
   "download.default_directory": download_dir
@@ -44,7 +65,7 @@ setFromTo(20, 20)
 # 검색 버튼 클릭
 search()
 # 페이지당 결과 수를 100으로 지정
-pageOptionNum = 100
+pageOptionNum = 10
 pageOption(pageOptionNum)
 
 billNum = []
@@ -100,6 +121,8 @@ for i in range(1,pageOptionNum+1):
     # 각 의안 페이지로 들어가기
     driver.find_element_by_xpath(xmlPath).click()
 
+    time.sleep(np.random.uniform(5, 10))
+
     # 대표발의자 뽑아내기
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
@@ -140,6 +163,7 @@ for i in range(1,pageOptionNum+1):
     # 공동발의자 추가하기
     subProposer.append(' '.join(Coactor_list))
 
+    time.sleep(np.random.uniform(5, 10))
 
     # # 제안자 뽑아내기
     # proposer_Xpath = "//img[@src='/bill/images/sub/btn_pp01.gif']/.."
@@ -158,7 +182,7 @@ for i in range(1,pageOptionNum+1):
     pdf_Xpath_list = driver.find_elements_by_xpath("//img[@src='/bill/images/icon/icon_pdf.png']/..")
     for path in pdf_Xpath_list:
         path.click()
-        time.sleep(10)
+        time.sleep(np.random.uniform(10, 15))
 
     # 다운로드한 파일을 의안번호 폴더에 옮긴다
     files = [ file for file in os.listdir(download_dir) \
@@ -172,9 +196,20 @@ for i in range(1,pageOptionNum+1):
     xmlPath_listBtn = "//div[@class='listBtn']/a"
     driver.find_element_by_xpath(xmlPath_listBtn).click()
 
-    if i == 3: break
+    time.sleep(np.random.uniform(3,6))
 
-
+# database에 업데이트
+for i in range(len(billNum)):
+    updateOneRow('../db/assembly.db',
+                 [billNum[i],
+                 billName[i],
+                 billId[i],
+                 proposerCategory[i],
+                 proposerDate[i],
+                 decisionDate[i],
+                 decisionResult[i],
+                 mainProposer[i],
+                 subProposer[i]])
 
 driver.quit()
 
