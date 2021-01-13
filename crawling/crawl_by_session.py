@@ -6,7 +6,7 @@ import shutil
 import sqlite3
 import numpy as np
 
-from lxml import etree
+from .indirect_crawl_test import indirect_request, indirect_webdriver, rand_time_sleep
 
 def setFromTo(FromNum, ToNum):
     From = driver.find_elements_by_xpath(f"//option[@value='{str(FromNum)}']")[0]
@@ -46,16 +46,9 @@ def updateOneRow(db, vals_list):
                 subProposer) 
                 VALUES(?,?,?,?,?,?,?,?,?)
                 """, vals_list)
-
-# 다운로드 경로 지정
 download_dir = '/Users/shinbo/contest_repository/assembly/data/'
-options = webdriver.ChromeOptions()
-options.add_experimental_option("prefs", {
-  "download.default_directory": download_dir
-})
 
-driver = webdriver.Chrome(options=options)
-driver.implicitly_wait(3)
+driver = indirect_webdriver()
 driver.get('https://likms.assembly.go.kr/bill/main.do')
 
 # 국회 시작 및 만료 기간 지정
